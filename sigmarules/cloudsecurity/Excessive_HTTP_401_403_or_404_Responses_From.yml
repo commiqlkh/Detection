@@ -1,0 +1,48 @@
+title: Excessive HTTP 401 403 or 404 Responses From a Single Source
+id: 1dc63336-d64e-44cc-a6b2-0f3336f0d205
+name: suspicious_http_4xx_response_codes
+status: experimental
+description: Detects repeated HTTP unauthorized, forbidden, or not-found responses from the same source while excluding known Microsoft Graph, Azure AD, Datadog, and CrowdStrike connector activity.
+author: SOC Team
+date: 2026-07-01
+falsepositives:
+  - Legitimate user authentication failures
+  - Vulnerability scanning or application testing
+  - Misconfigured integrations
+  - Non-malicious web crawlers
+level: medium
+
+detection:
+  selection_4xx:
+    http.response.status_code:
+      - 401
+      - 403
+      - 404
+
+  filter_graph:
+    url.domain: graph.microsoft.com
+
+  filter_azure_ad:
+    action.name: Microsoft Graph Activity
+
+  filter_datadog:
+    aks.log.pod_log|contains: Datadog
+
+  filter_crowdstrike:
+    user_agent.original|contains: sekoiaio-connector/crowdstrike-falcon-1.25.15
+
+  condition: selection_4xx and not 1 of filter_*
+---
+name: suspicious_http_4xx_response_codes_burst
+action: correlation
+type: event_count
+rule: suspicious_http_4xx_response_codes
+group-by:
+  - http.response.status_code
+  - user_agent.original
+  - host.name
+  - source.address
+  - url.path
+timespan: 1m
+condition:
+  gte: 20
