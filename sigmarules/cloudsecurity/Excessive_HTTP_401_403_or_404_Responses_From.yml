@@ -3,7 +3,7 @@ id: 1dc63336-d64e-44cc-a6b2-0f3336f0d205
 name: suspicious_http_4xx_response_codes
 status: experimental
 description: Detects repeated HTTP unauthorized, forbidden, or not-found responses from the same source while excluding known Microsoft Graph, Azure AD, Datadog, and CrowdStrike connector activity.
-author: SOC Team
+author: commiqlkh
 date: 2026-07-01
 falsepositives:
   - Legitimate user authentication failures
@@ -29,7 +29,7 @@ detection:
     aks.log.pod_log|contains: Datadog
 
   filter_crowdstrike:
-    user_agent.original|contains: sekoiaio-connector/crowdstrike-falcon-1.25.15
+    user_agent.original|contains: ####
 
   condition: selection_4xx and not 1 of filter_*
 ---
