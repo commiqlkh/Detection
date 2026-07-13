@@ -1,0 +1,42 @@
+---
+id: 15f43b39-57a6-4779-9da3-4eaf33b43f03
+title: NGINX IIS 5xx Response Burst
+name: nginx_iis_5xx_response_burst
+description: Detects repeated 5xx responses from NGINX or IIS, excluding known Graph, CrowdStrike, and Datadog noise.
+
+detection:
+  selection_webserver:
+    event.module:
+      - nginx
+      - iis
+
+  selection_5xx:
+    http.response.status_code|gte: 500
+    http.response.status_code|lte: 599
+
+  filter_graph_domain:
+    url.domain: graph.microsoft.com
+
+  filter_microsoft_graph_activity:
+    action.name: Microsoft Graph Activity
+
+  filter_crowdstrike_connector:
+    user_agent.original|contains: sekoiaio-connector/crowdstrike-falcon-
+
+  filter_datadog:
+    aks.log.pod_log|contains: Datadog
+
+  condition: selection_webserver and selection_5xx and not 1 of filter_*
+
+---
+id: 958d9e67-6b68-48ce-a6a1-5d8743c8c7fa
+title: NGINX IIS 5xx Response Burst Correlation
+name: nginx_iis_5xx_response_burst_function
+action: correlation
+type: event_count
+rule: nginx_iis_5xx_response_burst
+fields:
+  - host.name
+timespan: 5m
+condition:
+  gte: 10
