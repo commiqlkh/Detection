@@ -3,7 +3,7 @@ id: f8f07240-ef15-4ba4-98f4-524216e90f2b
 name: suspicious_http_5xx_response_codes
 status: experimental
 description: Detects repeated HTTP server-error responses from the same source while excluding known Microsoft Graph, Azure AD, Datadog, and CrowdStrike connector activity.
-author: SOC Team
+author: commiqlkh
 date: 2026-07-01
 falsepositives:
   - Application outage or backend service failure
@@ -26,7 +26,7 @@ detection:
     aks.log.pod_log|contains: Datadog
 
   filter_crowdstrike:
-    user_agent.original|contains: sekoiaio-connector/crowdstrike-falcon-1.25.15
+    user_agent.original|contains: #####
 
   condition: selection_5xx and not 1 of filter_*
 ---
