@@ -1,0 +1,58 @@
+title: Microsoft 365 DLP Policy or Rule Created Modified or Removed
+id: 9e13b4dd-0e50-4a11-b56f-32b2d1cbf7a6
+name: m365_dlp_policy_or_rule_changed
+status: stable
+description: |
+  Detects Microsoft 365 Data Loss Prevention policy or rule changes, including
+  creation, modification, or removal of DLP compliance policies and rules.
+  Attackers or unauthorized administrators may modify or remove DLP controls to
+  weaken data protection, bypass monitoring, or enable sensitive-data exfiltration.
+  Validate the change against approved change management.
+author: commiqlkh
+date: 2026-07-09
+tags:
+  - attack.defense_evasion
+  - attack.exfiltration
+  - attack.t1562
+  - attack.t1041
+
+logsource:
+  product: m365
+  service: purview
+  category: audit
+
+detection:
+  selection_dlp_policy_change:
+    event.action:
+      - New-DlpCompliancePolicy
+      - Set-DlpCompliancePolicy
+      - Remove-DlpCompliancePolicy
+      - New-DlpComplianceRule
+      - Set-DlpComplianceRule
+      - Remove-DlpComplianceRule
+
+  condition: selection_dlp_policy_change
+
+falsepositives:
+  - Approved DLP policy creation, tuning, or cleanup.
+  - Authorized Microsoft Purview administration activity.
+  - Planned DLP rule testing or data-protection policy migration.
+  - Changes performed during compliance onboarding or policy optimization.
+
+fields:
+  - timestamp
+  - event.action
+  - action.name
+  - action.outcome
+  - user.name
+  - user.email
+  - user.id
+  - source.ip
+  - source.geo.country_iso_code
+  - user_agent.original
+  - office365.audit.object_id
+  - office365.exchange_admin.parameters
+  - office365.result_status
+  - message
+
+level: high
