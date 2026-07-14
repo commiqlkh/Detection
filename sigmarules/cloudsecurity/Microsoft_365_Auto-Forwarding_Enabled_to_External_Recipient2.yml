@@ -1,0 +1,83 @@
+title: Microsoft 365 Auto-Forwarding Enabled to External Recipient
+id: 1f3d46ea-2c7b-4f5a-9a6b-5a41f6d3d8e9
+name: m365_auto_forwarding_enabled_to_external_recipient
+status: stable
+description: |
+  Detects Microsoft 365 inbox rule or mailbox forwarding configuration where
+  messages are forwarded or redirected to an external recipient. External
+  forwarding is commonly abused during business email compromise to silently
+  exfiltrate emails or maintain visibility into a compromised mailbox.
+author: Security Operations Center
+date: 2026-07-09
+tags:
+  - attack.persistence
+  - attack.collection
+  - attack.exfiltration
+  - attack.t1098
+  - attack.t1114
+  - attack.t1114.003
+  - attack.t1041
+
+logsource:
+  product: m365
+  service: exchange
+  category: audit
+
+detection:
+  selection_inbox_rule_forwarding:
+    event.action:
+      - New-InboxRule
+      - Set-InboxRule
+    action.outcome: success
+    office365.exchange_admin.parameters|contains:
+      - 'ForwardTo:'
+      - 'RedirectTo:'
+      - 'ForwardAsAttachmentTo:'
+
+  selection_mailbox_forwarding:
+    event.action: Set-Mailbox
+    action.outcome: success
+    office365.exchange_admin.parameters|contains: 'ForwardingSmtpAddress:smtp:'
+
+  selection_recipient_email:
+    office365.exchange_admin.parameters|re: '(?i)(ForwardTo|RedirectTo|ForwardAsAttachmentTo|ForwardingSmtpAddress):.*@[a-z0-9._%+-]+\.[a-z]{2,}'
+
+  filter_internal_finstreet:
+    office365.exchange_admin.parameters|contains: '@finstreet.ae'
+
+  filter_internal_m365:
+    office365.exchange_admin.parameters|contains: '@companyname.onmicrosoft.com'
+
+  filter_internal_azure:
+    office365.exchange_admin.parameters|contains: '@companyname.onmicrosoft.com'
+
+  condition: >
+    (
+      selection_inbox_rule_forwarding
+      or selection_mailbox_forwarding
+    )
+    and selection_recipient_email
+    and not 1 of filter_internal_*
+
+falsepositives:
+  - Approved forwarding to external business partners or personal mailboxes.
+  - Approved mailbox forwarding during user transition or legal/compliance workflows.
+  - Finance, vendor, or shared mailbox workflows with documented external recipients.
+
+fields:
+  - timestamp
+  - event.action
+  - action.name
+  - action.outcome
+  - user.name
+  - user.email
+  - user.id
+  - source.ip
+  - source.geo.country_iso_code
+  - user_agent.original
+  - office365.audit.object_id
+  - office365.exchange_admin.parameters
+  - office365.result_status
+  - message
+
+level: high
